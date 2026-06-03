@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A premium, glassmorphic weather forecasting dashboard and automated outfit advisor based on real-time meteorological indicators." />
+    <title>SkyWear // Weather & Outfit Advisor</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-default">
+    <div class="app-container">
+        <!-- Header & Search Controls -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i data-lucide="cloud-sun" class="logo-icon animate-pulse"></i>
+                <h1>SkyWear</h1>
+            </div>
+            
+            <div class="search-controls">
+                <div class="search-box-container">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="city-input" placeholder="Search for a city..." autocomplete="off" />
+                        <button id="clear-search" class="clear-btn hidden">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <!-- Autocomplete dropdown -->
+                    <div id="search-suggestions" class="suggestions-dropdown hidden"></div>
+                </div>
+                
+                <div class="units-toggle">
+                    <button id="unit-c" class="unit-btn active">°C</button>
+                    <button id="unit-f" class="unit-btn">°F</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Side: Weather Status -->
+            <section class="weather-summary-card glass">
+                <div class="current-weather-main">
+                    <div class="location-details">
+                        <h2 id="location-name">Loading...</h2>
+                        <p id="local-time">--:--</p>
+                    </div>
+                    <div class="weather-visual">
+                        <div id="weather-icon-large" class="weather-icon-wrapper">
+                            <i data-lucide="cloud-sun" class="large-icon"></i>
+                        </div>
+                        <div class="temp-display">
+                            <span id="current-temp">--</span><span class="degree-symbol">°</span>
+                        </div>
+                    </div>
+                    <div class="weather-desc-row">
+                        <span id="weather-description">Retrieving conditions...</span>
+                        <div class="temp-range">
+                            <span class="range-item"><i data-lucide="arrow-up" class="range-icon icon-red"></i> H: <span id="temp-high">--</span>°</span>
+                            <span class="range-item"><i data-lucide="arrow-down" class="range-icon icon-blue"></i> L: <span id="temp-low">--</span>°</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick stats strip -->
+                <div class="quick-stats">
+                    <div class="stat-badge">
+                        <i data-lucide="droplets"></i>
+                        <span class="stat-label">Humidity</span>
+                        <span id="stat-humidity" class="stat-value">--%</span>
+                    </div>
+                    <div class="stat-badge">
+                        <i data-lucide="wind"></i>
+                        <span class="stat-label">Wind</span>
+                        <span id="stat-wind" class="stat-value">-- km/h</span>
+                    </div>
+                    <div class="stat-badge">
+                        <i data-lucide="umbrella"></i>
+                        <span class="stat-label">Rain Chance</span>
+                        <span id="stat-rain" class="stat-value">--%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Outfit Advisor Panel -->
+            <section class="outfit-advisor-card glass">
+                <div class="card-header">
+                    <i data-lucide="shirt" class="header-icon"></i>
+                    <h3>Smart Outfit Advisor</h3>
+                </div>
+                
+                <div class="advisor-content">
+                    <div class="textual-advice-box">
+                        <p id="outfit-summary">Enter a location to receive custom clothing recommendations based on real-time weather indicators.</p>
+                    </div>
+                    
+                    <div class="outfit-grid">
+                        <div class="outfit-item" id="outfit-outerwear">
+                            <div class="outfit-icon"><i data-lucide="pocket"></i></div>
+                            <div class="outfit-details">
+                                <span class="outfit-label">Outerwear</span>
+                                <span class="outfit-value" id="val-outerwear">--</span>
+                            </div>
+                        </div>
+                        <div class="outfit-item" id="outfit-top">
+                            <div class="outfit-icon"><i data-lucide="shirt"></i></div>
+                            <div class="outfit-details">
+                                <span class="outfit-label">Top Layer</span>
+                                <span class="outfit-value" id="val-top">--</span>
+                            </div>
+                        </div>
+                        <div class="outfit-item" id="outfit-bottom">
+                            <div class="outfit-icon"><i data-lucide="columns"></i></div>
+                            <div class="outfit-details">
+                                <span class="outfit-label">Bottoms</span>
+                                <span class="outfit-value" id="val-bottom">--</span>
+                            </div>
+                        </div>
+                        <div class="outfit-item" id="outfit-footwear">
+                            <div class="outfit-icon"><i data-lucide="footprints"></i></div>
+                            <div class="outfit-details">
+                                <span class="outfit-label">Footwear</span>
+                                <span class="outfit-value" id="val-footwear">--</span>
+                            </div>
+                        </div>
+                        <div class="outfit-item accent-item" id="outfit-acc-1">
+                            <div class="outfit-icon"><i data-lucide="sparkles"></i></div>
+                            <div class="outfit-details">
+                                <span class="outfit-label">Essential Accessory</span>
+                                <span class="outfit-value" id="val-acc-1">--</span>
+                            </div>
+                        </div>
+                        <div class="outfit-item accent-item" id="outfit-acc-2">
+                            <div class="outfit-icon"><i data-lucide="smile"></i></div>
+                            <div class="outfit-details">
+                                <span class="outfit-label">Optional Add-on</span>
+                                <span class="outfit-value" id="val-acc-2">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hourly Forecast & SVG Chart -->
+            <section class="hourly-forecast-card glass full-width">
+                <div class="card-header">
+                    <i data-lucide="clock" class="header-icon"></i>
+                    <h3>Hourly Outlook &amp; Temperature Curve</h3>
+                </div>
+                <div class="hourly-chart-wrapper">
+                    <!-- Graph container -->
+                    <div class="svg-chart-container" id="svg-chart-container">
+                        <!-- Custom SVG will be injected here -->
+                    </div>
+                    <!-- Horizontally scrolling cards -->
+                    <div class="hourly-cards-scroll" id="hourly-scroll-container">
+                        <!-- Hourly items injected dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7-Day Forecast Grid -->
+            <section class="daily-forecast-card glass">
+                <div class="card-header">
+                    <i data-lucide="calendar" class="header-icon"></i>
+                    <h3>7-Day Forecast</h3>
+                </div>
+                <div class="daily-list" id="daily-forecast-container">
+                    <!-- 7 days list items injected dynamically -->
+                </div>
+            </section>
+
+            <!-- Detailed Weather Indices (UV, Air Quality, Wind, Sunset/Rise) -->
+            <section class="detailed-metrics-card glass">
+                <div class="card-header">
+                    <i data-lucide="activity" class="header-icon"></i>
+                    <h3>Weather Analytics &amp; Comfort Metrics</h3>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-icon"><i data-lucide="sun" class="icon-uv"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-label">UV Index</span>
+                            <span id="val-uv" class="metric-value">--</span>
+                            <span id="desc-uv" class="metric-subtext">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-icon"><i data-lucide="gauge" class="icon-ap"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-label">Barometric Pressure</span>
+                            <span id="val-pressure" class="metric-value">-- hPa</span>
+                            <span id="desc-pressure" class="metric-subtext">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-icon"><i data-lucide="eye" class="icon-vis"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-label">Visibility</span>
+                            <span id="val-visibility" class="metric-value">-- km</span>
+                            <span id="desc-visibility" class="metric-subtext">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-icon"><i data-lucide="wind" class="icon-wind-dir"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-label">Wind Direction</span>
+                            <span id="val-wind-dir" class="metric-value">--°</span>
+                            <span id="desc-wind-dir" class="metric-subtext">--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
