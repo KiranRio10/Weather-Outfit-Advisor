@@ -248,19 +248,115 @@ async function fetchCityCoordinates(query) {
     }
 }
 
-// Fetch forecast data from Open-Meteo for coordinates
+// Fetch forecast data from Open-Meteo for coordinates (with retry logic)
 async function fetchWeatherData(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,weather_code,uv_index,visibility,pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum&timezone=auto`;
     
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Weather forecast service error");
-        return await response.json();
-    } catch (err) {
-        console.error("Weather fetch failed:", err);
-        alert("Failed to retrieve weather data. Please check your internet connection.");
-        return null;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`Weather fetch attempt ${attempt}/${maxRetries}...`);
+            const response = await fetch(url);
+            
+            if (response.ok) {
+                return await response.json();
+            }
+            
+            // Server error (502, 503, etc.) — retry after a delay
+            if (response.status >= 500 && attempt < maxRetries) {
+                const delay = attempt * 2000; // 2s, 4s backoff
+                console.warn(`API returned ${response.status}. Retrying in ${delay / 1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            
+            throw new Error(`Weather API returned status ${response.status}`);
+        } catch (err) {
+            console.error(`Weather fetch attempt ${attempt} failed:`, err);
+            
+            if (attempt < maxRetries) {
+                const delay = attempt * 2000;
+                console.warn(`Retrying in ${delay / 1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            
+            // All retries exhausted
+            showErrorNotification("Weather service is temporarily unavailable. The app will automatically retry — please wait a moment and try again.");
+            return null;
+        }
     }
+    
+    return null;
+}
+
+// Show a non-blocking error notification with Retry button and auto-retry
+let autoRetryTimer = null;
+
+function showErrorNotification(message) {
+    // Remove any existing notification & timer
+    const existing = document.getElementById('error-notification');
+    if (existing) existing.remove();
+    if (autoRetryTimer) clearInterval(autoRetryTimer);
+    
+    let countdown = 30;
+    
+    const notification = document.createElement('div');
+    notification.id = 'error-notification';
+    notification.innerHTML = `
+        <div style="
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(255,75,75,0.95), rgba(200,40,40,0.95));
+            color: #fff; padding: 16px 24px; border-radius: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 500;
+            box-shadow: 0 8px 32px rgba(255,75,75,0.35); z-index: 10000;
+            display: flex; align-items: center; gap: 12px; max-width: 560px;
+            backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15);
+            animation: slideDown 0.4s ease;
+        ">
+            <span style="font-size: 20px; flex-shrink:0;">⚠️</span>
+            <div style="flex:1;">
+                <div>${message}</div>
+                <div id="retry-countdown" style="font-size:12px; opacity:0.8; margin-top:4px;">Auto-retry in ${countdown}s...</div>
+            </div>
+            <button id="retry-now-btn" style="
+                background: rgba(255,255,255,0.25); border: none; color: #fff;
+                padding: 6px 14px; border-radius: 8px; cursor: pointer;
+                font-size: 13px; font-weight: 600; font-family: inherit;
+                white-space: nowrap; transition: background 0.2s;
+            ">Retry Now</button>
+            <button onclick="this.closest('#error-notification').remove()" style="
+                background: rgba(255,255,255,0.15); border: none; color: #fff;
+                width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+                font-size: 14px; display: flex; align-items: center; justify-content: center;
+                flex-shrink: 0;
+            ">✕</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    // Retry button handler
+    const retryBtn = document.getElementById('retry-now-btn');
+    retryBtn.addEventListener('click', () => {
+        notification.remove();
+        if (autoRetryTimer) clearInterval(autoRetryTimer);
+        loadWeatherDataForCurrentLocation();
+    });
+    retryBtn.addEventListener('mouseover', () => { retryBtn.style.background = 'rgba(255,255,255,0.4)'; });
+    retryBtn.addEventListener('mouseout', () => { retryBtn.style.background = 'rgba(255,255,255,0.25)'; });
+    
+    // Auto-retry countdown
+    const countdownEl = document.getElementById('retry-countdown');
+    autoRetryTimer = setInterval(() => {
+        countdown--;
+        if (countdownEl) countdownEl.textContent = `Auto-retry in ${countdown}s...`;
+        if (countdown <= 0) {
+            clearInterval(autoRetryTimer);
+            if (notification.parentNode) notification.remove();
+            loadWeatherDataForCurrentLocation();
+        }
+    }, 1000);
 }
 
 // --- 7. DYNAMIC UI RENDERING FUNCTIONS ---
